@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GTD Desktop - MacBook Pro 13"</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", Helvetica, Arial, sans-serif;
+      user-select: none;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="bg-neutral-950 text-neutral-100 h-screen flex flex-col overflow-hidden">
+
+  <!-- macOS Window Titlebar -->
+  <header class="h-10 bg-neutral-900 border-b border-neutral-800 flex items-center justify-between px-4 select-none shrink-0">
+    <div class="flex items-center space-x-2">
+      <div class="flex space-x-1.5 mr-2">
+        <span class="w-3 h-3 rounded-full bg-red-500 inline-block"></span>
+        <span class="w-3 h-3 rounded-full bg-yellow-500 inline-block"></span>
+        <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
+      </div>
+      <span class="text-xs font-semibold text-neutral-300">GTD Desktop Pro — 13" MacBook Pro</span>
+    </div>
+
+    <!-- Quick action buttons -->
+    <div class="flex items-center space-x-2">
+      <button onclick="readFromClipboard()" class="px-2.5 py-1 text-xs bg-neutral-800 hover:bg-neutral-700 rounded border border-neutral-700 flex items-center space-x-1.5 transition">
+        <i class="fa-solid fa-paste text-blue-400"></i>
+        <span>Incolla Appunti</span>
+      </button>
+      <button onclick="toggleCloudSyncModal()" class="px-2.5 py-1 text-xs bg-neutral-800 hover:bg-neutral-700 rounded border border-neutral-700 flex items-center space-x-1.5 transition">
+        <i class="fa-solid fa-cloud text-indigo-400"></i>
+        <span>Sync Cloud</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Split View Layout -->
+  <div class="flex flex-1 overflow-hidden">
+    
+    <!-- Left Sidebar -->
+    <aside class="w-56 bg-neutral-900/60 border-r border-neutral-800 flex flex-col justify-between p-3 select-none shrink-0">
+      <div class="space-y-1">
+        <div class="text-[10px] font-bold text-neutral-500 uppercase px-2 mb-1 tracking-wider">Flusso GTD</div>
+        <button onclick="selectCategory('inbox')" class="cat-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium text-left bg-blue-600/20 text-blue-400" data-cat="inbox">
+          <span class="flex items-center space-x-2"><i class="fa-solid fa-tray w-4"></i><span>Inbox</span></span>
+          <span id="badge-inbox" class="text-[10px] bg-neutral-800 px-1.5 py-0.5 rounded-full text-neutral-300">0</span>
+        </button>
+        <button onclick="selectCategory('actions')" class="cat-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium text-left text-neutral-400 hover:bg-neutral-800/50" data-cat="actions">
+          <span class="flex items-center space-x-2"><i class="fa-solid fa-bolt w-4"></i><span>Prossime Azioni</span></span>
+          <span id="badge-actions" class="text-[10px] bg-neutral-800 px-1.5 py-0.5 rounded-full text-neutral-300">0</span>
+        </button>
+        <button onclick="selectCategory('projects')" class="cat-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium text-left text-neutral-400 hover:bg-neutral-800/50" data-cat="projects">
+          <span class="flex items-center space-x-2"><i class="fa-solid fa-diagram-project w-4"></i><span>Progetti</span></span>
+          <span id="badge-projects" class="text-[10px] bg-neutral-800 px-1.5 py-0.5 rounded-full text-neutral-300">0</span>
+        </button>
+        <button onclick="selectCategory('waiting')" class="cat-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium text-left text-neutral-400 hover:bg-neutral-800/50" data-cat="waiting">
+          <span class="flex items-center space-x-2"><i class="fa-solid fa-clock w-4"></i><span>In Attesa</span></span>
+          <span id="badge-waiting" class="text-[10px] bg-neutral-800 px-1.5 py-0.5 rounded-full text-neutral-300">0</span>
+        </button>
+        <button onclick="selectCategory('someday')" class="cat-btn w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium text-left text-neutral-400 hover:bg-neutral-800/50" data-cat="someday">
+          <span class="flex items-center space-x-2"><i class="fa-solid fa-box-archive w-4"></i><span>Un Giorno / Forse</span></span>
+          <span id="badge-someday" class="text-[10px] bg-neutral-800 px-1.5 py-0.5 rounded-full text-neutral-300">0</span>
+        </button>
+      </div>
+
+      <!-- Quick Add Widget -->
+      <div class="border-t border-neutral-800 pt-3">
+        <button onclick="showNewTaskModal()" class="w-full py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 transition">
+          <i class="fa-solid fa-plus"></i>
+          <span>Nuovo Compito</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content List -->
+    <main class="flex-1 flex flex-col bg-neutral-950 overflow-hidden">
+      <!-- Toolbar -->
+      <div class="h-12 border-b border-neutral-800 px-6 flex items-center justify-between shrink-0">
+        <h1 id="view-title" class="text-sm font-bold text-neutral-200">Inbox (Da Chiarire)</h1>
+        <div class="text-xs text-neutral-500" id="item-count-label">0 elementi</div>
+      </div>
+
+      <!-- Scrollable List Container -->
+      <div id="items-list" class="flex-1 overflow-y-auto custom-scroll p-6 space-y-3">
+        <!-- Rendered items -->
+      </div>
+    </main>
+
+  </div>
+
+  <!-- Universal Edit Modal -->
+  <div id="edit-modal" class="fixed inset-0 z-50 bg-black/70 hidden flex items-center justify-center p-4">
+    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl w-full max-w-md p-6 space-y-4">
+      <div class="flex justify-between items-center border-b border-neutral-800 pb-3">
+        <h3 class="font-semibold text-sm text-neutral-200">Modifica Compito</h3>
+        <button onclick="closeEditModal()" class="text-neutral-500 hover:text-white">&times;</button>
+      </div>
+      <input type="hidden" id="edit-orig-cat">
+      <input type="hidden" id="edit-orig-idx">
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="text-neutral-400 block mb-1">Titolo / Azione</label>
+          <input type="text" id="edit-title" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg p-2.5 text-white">
+        </div>
+        <div>
+          <label class="text-neutral-400 block mb-1">Note / Dettagli</label>
+          <textarea id="edit-details" rows="3" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg p-2.5 text-white"></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-neutral-400 block mb-1">Categoria GTD</label>
+            <select id="edit-category" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg p-2 text-white">
+              <option value="inbox">Inbox</option>
+              <option value="actions">Prossime Azioni</option>
+              <option value="projects">Progetti</option>
+              <option value="waiting">In Attesa</option>
+              <option value="someday">Un Giorno / Forse</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-neutral-400 block mb-1">Contesto</label>
+            <select id="edit-context" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg p-2 text-white">
+              <option value="">Nessuno</option>
+              <option value="@Computer">@Computer</option>
+              <option value="@Telefono">@Telefono</option>
+              <option value="@InGiro">@InGiro</option>
+              <option value="@Casa">@Casa</option>
+              <option value="@Ufficio">@Ufficio</option>
+              <option value="@Email">@Email</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-neutral-400 block mb-1">Progetto</label>
+            <input type="text" id="edit-project" placeholder="Opzionale" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg p-2 text-white">
+          </div>
+          <div>
+            <label class="text-neutral-400 block mb-1">Delegato a</label>
+            <input type="text" id="edit-delegate" placeholder="Opzionale" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg p-2 text-white">
+          </div>
+        </div>
+      </div>
+
+      <div class="flex space-x-2 pt-2">
+        <button onclick="saveEditedItem()" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs font-semibold">Salva Modifiche</button>
+        <button onclick="startClarifyFromEdit()" class="px-4 py-2.5 bg-amber-600 hover:bg-amber-500 rounded-lg text-xs font-semibold flex items-center space-x-1.5">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+          <span>Chiarisci GTD</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GTD Clarify Decision-Tree Modal -->
+  <div id="clarify-modal" class="fixed inset-0 z-50 bg-black/70 hidden flex items-center justify-center p-4">
+    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl w-full max-w-lg p-6 space-y-4">
+      <div class="flex justify-between items-center border-b border-neutral-800 pb-2">
+        <div class="flex items-center space-x-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+          <h3 class="font-bold text-xs uppercase tracking-wider text-neutral-200">Processo GTD Chiarisci</h3>
+        </div>
+        <button onclick="closeClarifyModal()" class="text-neutral-500 hover:text-white">&times;</button>
+      </div>
+
+      <div class="bg-neutral-950 border border-neutral-800 rounded-xl p-3.5">
+        <span class="text-[10px] text-neutral-500 uppercase tracking-wider block">Elemento da elaborare:</span>
+        <h4 id="wizard-item-title" class="font-semibold text-sm text-neutral-200 mt-1"></h4>
+        <p id="wizard-item-details" class="text-xs text-neutral-400 mt-1 whitespace-pre-wrap"></p>
+      </div>
+
+      <!-- Step 1: Actionable -->
+      <div id="step-actionable" class="space-y-3">
+        <p class="text-xs font-semibold text-neutral-300">1. Richiede un'azione fisica concreta?</p>
+        <div class="grid grid-cols-2 gap-3">
+          <button onclick="wizardGoActionable(true)" class="py-3 px-3 rounded-lg bg-blue-600 hover:bg-blue-500 font-semibold text-xs flex items-center justify-center space-x-2">
+            <i class="fa-solid fa-check"></i>
+            <span>SÌ (Richiede Azione)</span>
+          </button>
+          <button onclick="wizardGoActionable(false)" class="py-3 px-3 rounded-lg bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 font-semibold text-xs flex items-center justify-center space-x-2">
+            <i class="fa-solid fa-xmark"></i>
+            <span>NO (Non Azionabile)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 1-B: Non-Actionable Options -->
+      <div id="step-non-actionable" class="hidden space-y-2">
+        <p class="text-xs font-semibold text-neutral-300">Scegli destinazione per elemento non azionabile:</p>
+        <button onclick="wizardFinishNonAction('someday')" class="w-full py-2 px-3 rounded-lg bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 text-xs text-left flex items-center justify-between">
+          <span><i class="fa-solid fa-box-archive mr-2 text-amber-400"></i>Un Giorno / Forse (Idea futura)</span>
+          <i class="fa-solid fa-chevron-right text-[10px] text-neutral-500"></i>
+        </button>
+        <button onclick="wizardFinishNonAction('trash')" class="w-full py-2 px-3 rounded-lg bg-red-950/40 hover:bg-red-950/60 border border-red-900/50 text-xs text-left text-red-300 flex items-center justify-between">
+          <span><i class="fa-solid fa-trash mr-2"></i>Elimina nel Cestino</span>
+          <i class="fa-solid fa-chevron-right text-[10px] text-neutral-500"></i>
+        </button>
+        <button onclick="wizardBackToStep1()" class="w-full py-1 text-center text-xs text-neutral-500 hover:text-neutral-300">Indietro</button>
+      </div>
+
+      <!-- Step 2: Define Action -->
+      <div id="step-define-action" class="hidden space-y-3">
+        <p class="text-xs font-semibold text-neutral-300">2. Qual è la prossima azione fisica concreta?</p>
+        <input type="text" id="wizard-next-action-input" placeholder="Verbo all'infinito (es. Inviare preventivo aggiornato)" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg p-2.5 text-xs text-white">
+
+        <div class="pt-2">
+          <label class="text-[11px] text-neutral-400 block mb-1">Fa parte di un Progetto (&gt;1 azione)?</label>
+          <input type="text" id="wizard-project-input" placeholder="Nome del progetto (opzionale)" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg p-2 text-xs text-white">
+        </div>
+
+        <button onclick="wizardGoTwoMinRule()" class="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 font-semibold text-xs">Verifica Regola dei 2 Minuti &rarr;</button>
+      </div>
+
+      <!-- Step 3: 2-Minute Rule -->
+      <div id="step-two-min" class="hidden space-y-3">
+        <p class="text-xs font-semibold text-neutral-300">3. Si può fare in meno di 2 minuti?</p>
+        
+        <div class="bg-neutral-950 border border-neutral-800 rounded-xl p-3 text-center space-y-2">
+          <div id="timer-display" class="text-2xl font-mono font-bold text-blue-400">02:00</div>
+          <div class="flex justify-center space-x-2">
+            <button onclick="startTimer()" id="btn-timer-start" class="px-3 py-1 bg-neutral-800 hover:bg-neutral-700 rounded text-xs border border-neutral-700">Avvia Timer</button>
+            <button onclick="resetTimer()" class="px-3 py-1 bg-neutral-800 hover:bg-neutral-700 rounded text-xs border border-neutral-700 text-neutral-400">Reset</button>
+          </div>
+        </div>
+
+        <button onclick="wizardFinishTwoMinDone()" class="w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-semibold text-xs flex items-center justify-center space-x-2">
+          <i class="fa-solid fa-check-double"></i>
+          <span>Fatta Subito! (Segna come completata)</span>
+        </button>
+
+        <button onclick="wizardGoDelegateOrDefer()" class="w-full py-2.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 font-semibold text-xs">
+          Richiede più di 2 Minuti (Delega o Assegna Contesto) &rarr;
+        </button>
+      </div>
+
+      <!-- Step 4: Delegate or Defer -->
+      <div id="step-delegate-defer" class="hidden space-y-3">
+        <p class="text-xs font-semibold text-neutral-300">4. Delega oppure assegna a una lista di contesto:</p>
+        
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-neutral-950 border border-neutral-800 rounded-xl p-3 space-y-2">
+            <span class="text-xs font-semibold text-neutral-300 block">Delega (In Attesa)</span>
+            <input type="text" id="wizard-delegate-input" placeholder="A chi? (es. Marco)" class="w-full bg-neutral-900 border border-neutral-700 rounded p-1.5 text-xs text-white">
+            <button onclick="wizardFinishDelegated()" class="w-full py-2 rounded bg-indigo-600 hover:bg-indigo-500 font-semibold text-xs">Salva in "In Attesa"</button>
+          </div>
+
+          <div class="bg-neutral-950 border border-neutral-800 rounded-xl p-3 space-y-2">
+            <span class="text-xs font-semibold text-neutral-300 block">Prossima Azione</span>
+            <select id="wizard-context-select" class="w-full bg-neutral-900 border border-neutral-700 rounded p-1.5 text-xs text-white">
+              <option value="@Computer">@Computer</option>
+              <option value="@Telefono">@Telefono</option>
+              <option value="@InGiro">@InGiro</option>
+              <option value="@Casa">@Casa</option>
+              <option value="@Ufficio">@Ufficio</option>
+              <option value="@Email">@Email</option>
+            </select>
+            <button onclick="wizardFinishAction()" class="w-full py-2 rounded bg-blue-600 hover:bg-blue-500 font-semibold text-xs">Salva in "Azioni"</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sync Modal -->
+  <div id="sync-modal" class="fixed inset-0 z-50 bg-black/70 hidden flex items-center justify-center p-4">
+    <div class="bg-neutral-900 border border-neutral-800 rounded-xl w-96 p-5 space-y-4">
+      <div class="flex justify-between items-center border-b border-neutral-800 pb-2">
+        <h3 class="font-semibold text-xs uppercase tracking-wider text-neutral-300">Sincronizzazione JSONBin</h3>
+        <button onclick="toggleCloudSyncModal()" class="text-neutral-500 hover:text-white">&times;</button>
+      </div>
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="text-neutral-400">Master Key</label>
+          <input type="password" id="sync-key" placeholder="$2a$10$..." class="w-full mt-1 bg-neutral-950 border border-neutral-800 rounded p-2 text-white">
+        </div>
+        <div>
+          <label class="text-neutral-400">Bin ID</label>
+          <input type="text" id="sync-bin" placeholder="65cb48..." class="w-full mt-1 bg-neutral-950 border border-neutral-800 rounded p-2 text-white">
+        </div>
+        <div class="flex space-x-2 pt-2">
+          <button onclick="uploadToCloud()" class="flex-1 py-2 rounded bg-blue-600 hover:bg-blue-500 font-medium">Invia al Cloud ⬆</button>
+          <button onclick="downloadFromCloud()" class="flex-1 py-2 rounded bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 font-medium">Scarica ⬇</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let gtdData = JSON.parse(localStorage.getItem('gtd_data_v3')) || {
+      inbox: [],
+      actions: [],
+      projects: [],
+      waiting: [],
+      someday: []
+    };
+
+    let activeCategory = 'inbox';
+    let clarifyActiveIndex = null;
+    let timerInterval = null;
+    let timerSeconds = 120;
+
+    function saveData() {
+      localStorage.setItem('gtd_data_v3', JSON.stringify(gtdData));
+      updateBadges();
+      renderList();
+    }
+
+    function updateBadges() {
+      ['inbox', 'actions', 'projects', 'waiting', 'someday'].forEach(cat => {
+        const el = document.getElementById(`badge-${cat}`);
+        if (el) el.textContent = gtdData[cat].length;
+      });
+    }
+
+    function selectCategory(cat) {
+      activeCategory = cat;
+      document.querySelectorAll('.cat-btn').forEach(btn => {
+        const isCurrent = btn.dataset.cat === cat;
+        btn.classList.toggle('bg-blue-600/20', isCurrent);
+        btn.classList.toggle('text-blue-400', isCurrent);
+        btn.classList.toggle('text-neutral-400', !isCurrent);
+      });
+      renderList();
+    }
+
+    function renderList() {
+      const titles = {
+        inbox: 'Inbox (Da Chiarire)',
+        actions: 'Prossime Azioni',
+        projects: 'Progetti Attivi',
+        waiting: 'In Attesa di Terzi',
+        someday: 'Un Giorno / Forse'
+      };
+      document.getElementById('view-title').textContent = titles[activeCategory];
+      const list = gtdData[activeCategory] || [];
+      document.getElementById('item-count-label').textContent = `${list.length} elementi`;
+
+      const container = document.getElementById('items-list');
+      if (list.length === 0) {
+        container.innerHTML = `<div class="h-full flex flex-col items-center justify-center text-neutral-600 py-20 text-xs">
+          <i class="fa-regular fa-folder-open text-4xl mb-3"></i>
+          <span>Nessun elemento presente in questa sezione.</span>
+        </div>`;
+        return;
+      }
+
+      container.innerHTML = list.map((item, idx) => `
+        <div class="bg-neutral-900 border border-neutral-800 rounded-xl p-4 flex items-start justify-between hover:border-neutral-700 transition">
+          <div class="space-y-1.5 flex-1 pr-4">
+            <h3 class="text-sm font-semibold text-neutral-200">${escapeHtml(item.title)}</h3>
+            ${item.details ? `<p class="text-xs text-neutral-400 whitespace-pre-wrap">${escapeHtml(item.details)}</p>` : ''}
+            <div class="flex flex-wrap items-center gap-2 pt-1 text-[11px] text-neutral-500">
+              <span>${item.date || 'Oggi'}</span>
+              ${item.context ? `<span class="bg-blue-950 text-blue-400 px-2 py-0.5 rounded border border-blue-900/50">${item.context}</span>` : ''}
+              ${item.project ? `<span class="bg-purple-950 text-purple-400 px-2 py-0.5 rounded border border-purple-900/50"><i class="fa-solid fa-diagram-project mr-1 text-[9px]"></i>${escapeHtml(item.project)}</span>` : ''}
+              ${item.delegated ? `<span class="bg-amber-950 text-amber-400 px-2 py-0.5 rounded border border-amber-900/50"><i class="fa-solid fa-user mr-1 text-[9px]"></i>${escapeHtml(item.delegated)}</span>` : ''}
+            </div>
+          </div>
+          <div class="flex items-center space-x-2 shrink-0">
+            ${activeCategory === 'inbox' ? `
+              <button onclick="startClarifyWizard(${idx})" class="px-2.5 py-1 text-xs bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 rounded font-semibold flex items-center space-x-1 transition">
+                <i class="fa-solid fa-wand-magic-sparkles text-[10px]"></i>
+                <span>Chiarisci GTD</span>
+              </button>
+            ` : ''}
+            <button onclick="openEditModal('${activeCategory}', ${idx})" class="p-1.5 text-neutral-400 hover:text-blue-400 rounded transition" title="Modifica">
+              <i class="fa-solid fa-pen text-xs"></i>
+            </button>
+            <button onclick="deleteItem('${activeCategory}', ${idx})" class="p-1.5 text-neutral-400 hover:text-red-400 rounded transition" title="Elimina">
+              <i class="fa-regular fa-trash-can text-xs"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // Universal Edit Modal
+    function openEditModal(category, index) {
+      const item = gtdData[category][index];
+      if (!item) return;
+
+      document.getElementById('edit-orig-cat').value = category;
+      document.getElementById('edit-orig-idx').value = index;
+      document.getElementById('edit-title').value = item.title || '';
+      document.getElementById('edit-details').value = item.details || '';
+      document.getElementById('edit-category').value = category;
+      document.getElementById('edit-context').value = item.context || '';
+      document.getElementById('edit-project').value = item.project || '';
+      document.getElementById('edit-delegate').value = item.delegated || '';
+
+      document.getElementById('edit-modal').classList.remove('hidden');
+    }
+    function closeEditModal() {
+      document.getElementById('edit-modal').classList.add('hidden');
+    }
+    function saveEditedItem() {
+      const origCat = document.getElementById('edit-orig-cat').value;
+      const origIdx = parseInt(document.getElementById('edit-orig-idx').value, 10);
+      const newCat = document.getElementById('edit-category').value;
+      const title = document.getElementById('edit-title').value.trim();
+
+      if (!title) return alert('Il titolo non può essere vuoto.');
+
+      const updated = {
+        title: title,
+        details: document.getElementById('edit-details').value.trim(),
+        context: document.getElementById('edit-context').value || undefined,
+        project: document.getElementById('edit-project').value.trim() || undefined,
+        delegated: document.getElementById('edit-delegate').value.trim() || undefined,
+        date: gtdData[origCat][origIdx]?.date || new Date().toLocaleDateString()
+      };
+
+      gtdData[origCat].splice(origIdx, 1);
+      gtdData[newCat].push(updated);
+
+      closeEditModal();
+      saveData();
+    }
+    function startClarifyFromEdit() {
+      const origCat = document.getElementById('edit-orig-cat').value;
+      const origIdx = parseInt(document.getElementById('edit-orig-idx').value, 10);
+      closeEditModal();
+      if (origCat === 'inbox') {
+        startClarifyWizard(origIdx);
+      } else {
+        const item = gtdData[origCat].splice(origIdx, 1)[0];
+        gtdData.inbox.push(item);
+        saveData();
+        startClarifyWizard(gtdData.inbox.length - 1);
+      }
+    }
+
+    // Clarify Wizard Logic
+    function startClarifyWizard(idx) {
+      clarifyActiveIndex = idx;
+      const item = gtdData.inbox[idx];
+      if (!item) return;
+
+      document.getElementById('wizard-item-title').textContent = item.title;
+      document.getElementById('wizard-item-details').textContent = item.details || '';
+      document.getElementById('wizard-next-action-input').value = item.title;
+      document.getElementById('wizard-project-input').value = '';
+      document.getElementById('wizard-delegate-input').value = '';
+
+      document.getElementById('step-actionable').classList.remove('hidden');
+      document.getElementById('step-non-actionable').classList.add('hidden');
+      document.getElementById('step-define-action').classList.add('hidden');
+      document.getElementById('step-two-min').classList.add('hidden');
+      document.getElementById('step-delegate-defer').classList.add('hidden');
+      resetTimer();
+
+      document.getElementById('clarify-modal').classList.remove('hidden');
+    }
+    function closeClarifyModal() {
+      resetTimer();
+      document.getElementById('clarify-modal').classList.add('hidden');
+    }
+
+    function wizardGoActionable(isActionable) {
+      document.getElementById('step-actionable').classList.add('hidden');
+      if (isActionable) {
+        document.getElementById('step-define-action').classList.remove('hidden');
+      } else {
+        document.getElementById('step-non-actionable').classList.remove('hidden');
+      }
+    }
+    function wizardBackToStep1() {
+      document.getElementById('step-non-actionable').classList.add('hidden');
+      document.getElementById('step-actionable').classList.remove('hidden');
+    }
+    function wizardFinishNonAction(type) {
+      const item = gtdData.inbox.splice(clarifyActiveIndex, 1)[0];
+      if (type === 'someday') {
+        gtdData.someday.push(item);
+      }
+      closeClarifyModal();
+      saveData();
+    }
+    function wizardGoTwoMinRule() {
+      const act = document.getElementById('wizard-next-action-input').value.trim();
+      if (!act) return alert("Specifica un'azione fisica concreta.");
+      document.getElementById('step-define-action').classList.add('hidden');
+      document.getElementById('step-two-min').classList.remove('hidden');
+    }
+    function wizardFinishTwoMinDone() {
+      gtdData.inbox.splice(clarifyActiveIndex, 1);
+      alert('Azione completata subito in meno di 2 minuti! Segnata come conclusa.');
+      closeClarifyModal();
+      saveData();
+    }
+    function wizardGoDelegateOrDefer() {
+      document.getElementById('step-two-min').classList.add('hidden');
+      document.getElementById('step-delegate-defer').classList.remove('hidden');
+    }
+    function wizardFinishDelegated() {
+      const person = document.getElementById('wizard-delegate-input').value.trim();
+      if (!person) return alert('Specifica a chi è delegata questa voce.');
+      const item = gtdData.inbox.splice(clarifyActiveIndex, 1)[0];
+      gtdData.waiting.push({
+        title: document.getElementById('wizard-next-action-input').value.trim() || item.title,
+        details: item.details,
+        delegated: person,
+        project: document.getElementById('wizard-project-input').value.trim() || undefined,
+        date: new Date().toLocaleDateString()
+      });
+      closeClarifyModal();
+      saveData();
+    }
+    function wizardFinishAction() {
+      const item = gtdData.inbox.splice(clarifyActiveIndex, 1)[0];
+      const proj = document.getElementById('wizard-project-input').value.trim();
+      const actionItem = {
+        title: document.getElementById('wizard-next-action-input').value.trim() || item.title,
+        details: item.details,
+        context: document.getElementById('wizard-context-select').value,
+        project: proj || undefined,
+        date: new Date().toLocaleDateString()
+      };
+      gtdData.actions.push(actionItem);
+
+      if (proj && !gtdData.projects.some(p => p.title.toLowerCase() === proj.toLowerCase())) {
+        gtdData.projects.push({
+          title: proj,
+          details: 'Creato dal flusso GTD',
+          date: new Date().toLocaleDateString()
+        });
+      }
+      closeClarifyModal();
+      saveData();
+    }
+
+    // Timer
+    function startTimer() {
+      if (timerInterval) return;
+      document.getElementById('btn-timer-start').textContent = 'In corso...';
+      timerInterval = setInterval(() => {
+        timerSeconds--;
+        const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+        const secs = String(timerSeconds % 60).padStart(2, '0');
+        document.getElementById('timer-display').textContent = `${mins}:${secs}`;
+        if (timerSeconds <= 0) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+          alert('Tempo scaduto (2 minuti)!');
+        }
+      }, 1000);
+    }
+    function resetTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = null;
+      timerSeconds = 120;
+      const display = document.getElementById('timer-display');
+      if (display) display.textContent = '02:00';
+      const btn = document.getElementById('btn-timer-start');
+      if (btn) btn.textContent = 'Avvia Timer';
+    }
+
+    function deleteItem(cat, idx) {
+      if (confirm('Eliminare questo elemento?')) {
+        gtdData[cat].splice(idx, 1);
+        saveData();
+      }
+    }
+
+    function showNewTaskModal() {
+      const t = prompt("Titolo nuovo elemento per l'Inbox:");
+      if (t) {
+        gtdData.inbox.push({
+          title: t,
+          details: '',
+          date: new Date().toLocaleDateString()
+        });
+        saveData();
+      }
+    }
+
+    async function readFromClipboard() {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (text) {
+          gtdData.inbox.push({
+            title: text.slice(0, 40) + (text.length > 40 ? '...' : ''),
+            details: text,
+            date: new Date().toLocaleDateString()
+          });
+          saveData();
+          alert('Nota copiata dagli appunti in Inbox!');
+        } else {
+          alert('Appunti vuoti.');
+        }
+      } catch (err) {
+        alert('Permesso per gli appunti non concesso.');
+      }
+    }
+
+    function toggleCloudSyncModal() {
+      document.getElementById('sync-key').value = localStorage.getItem('jsonbin_key') || '';
+      document.getElementById('sync-bin').value = localStorage.getItem('jsonbin_bin') || '';
+      document.getElementById('sync-modal').classList.toggle('hidden');
+    }
+
+    async function uploadToCloud() {
+      const key = document.getElementById('sync-key').value.trim();
+      const bin = document.getElementById('sync-bin').value.trim();
+      if (!key || !bin) return alert('Inserisci Master Key e Bin ID');
+
+      localStorage.setItem('jsonbin_key', key);
+      localStorage.setItem('jsonbin_bin', bin);
+
+      try {
+        const res = await fetch(`https://api.jsonbin.io/v3/b/${bin}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Master-Key': key
+          },
+          body: JSON.stringify(gtdData)
+        });
+        if (res.ok) {
+          alert('Dati sincronizzati con successo sul Cloud!');
+          toggleCloudSyncModal();
+        } else {
+          alert('Errore sincronizzazione: controlla credenziali.');
+        }
+      } catch (e) {
+        alert('Errore di connessione: ' + e.message);
+      }
+    }
+
+    async function downloadFromCloud() {
+      const key = document.getElementById('sync-key').value.trim();
+      const bin = document.getElementById('sync-bin').value.trim();
+      if (!key || !bin) return alert('Inserisci Master Key e Bin ID');
+
+      try {
+        const res = await fetch(`https://api.jsonbin.io/v3/b/${bin}/latest`, {
+          headers: { 'X-Master-Key': key }
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.record) {
+            gtdData = json.record;
+            saveData();
+            alert('Dati scaricati dal Cloud con successo!');
+            toggleCloudSyncModal();
+          }
+        } else {
+          alert('Errore nel recupero dati dal Cloud.');
+        }
+      } catch (e) {
+        alert('Errore di connessione: ' + e.message);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      updateBadges();
+      renderList();
+    });
+  </script>
+</body>
+</html>
